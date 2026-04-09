@@ -1,6 +1,6 @@
 {
   "name": "html2pdf-slides",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Convert HTML slide decks to high-fidelity PDF files",
   "license": "MIT",
   "bin": {

@@ -69,7 +69,7 @@ Most HTML to PDF tools treat your presentation like a static webpage. They miss 
 |---|---|---|---|---|
 | Setup | Auto-detect, zero config | Needs `--plugins` flag | Manual | Needs source code |
 | Dark themes | Preserved | Preserved | Stripped to white | Varies |
-| Fragments | Every state | Every state | Final state only | Varies |
+| Fragments | One page per state | Configurable (separate or overlay) | Final state only | Varies |
 | Slidev v-click | All 8 states | Partial | No | Yes |
 | Slide backgrounds | Per-slide sampling | Single color | White | Varies |
 | Quarto support | Yes (async wait) | May fail | No | N/A |

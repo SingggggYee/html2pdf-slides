@@ -1,10 +1,10 @@
 # html2pdf-slides
 
-Convert HTML slide presentations to high-fidelity PDF files. Automatically detects your slide framework and captures every slide, including animations, fragments, and click-reveal content.
+Convert HTML slide presentations to high-fidelity PDF files. The fastest way to export reveal.js, Slidev, Marp, impress.js, and Quarto presentations as PDF, with animations, fragments, dark themes, and click-reveal content fully preserved.
 
 ![demo](demo.gif)
 
-Works with **reveal.js**, **Slidev**, **Marp**, **impress.js**, **custom HTML slides**, and any HTML presentation that uses arrow-key navigation.
+A modern, framework-aware HTML to PDF converter for slide decks. Works with **reveal.js**, **Slidev**, **Marp**, **impress.js**, **Quarto**, **Shower**, **custom HTML slides**, and any HTML presentation that uses arrow-key navigation. Built on Puppeteer for pixel-perfect screenshot capture.
 
 ## Quick Start
 
@@ -32,9 +32,19 @@ html2pdf-slides https://yhatt.github.io/marp-cli-example/ -o marp.pdf
 
 ## Why html2pdf-slides?
 
-Most HTML-to-PDF tools treat your presentation like a static webpage. They miss animations, break dark themes, and collapse slide layouts.
+Most HTML to PDF tools treat your presentation like a static webpage. They miss animations, break dark themes, and collapse slide layouts. Generic HTML to PDF converters such as wkhtmltopdf, Puppeteer's `page.pdf()`, or browser print dialogs were never designed for slide decks.
 
-**html2pdf-slides** uses framework-native APIs to navigate through every slide and fragment state, captures pixel-perfect screenshots, and assembles them into a clean PDF with correct dimensions and background colors.
+**html2pdf-slides** uses framework-native APIs to navigate through every slide and fragment state, captures pixel-perfect screenshots, and assembles them into a clean PDF with correct dimensions and background colors. It is the easiest way to export presentation slides as PDF without losing visual fidelity.
+
+### Common use cases
+
+- Export reveal.js presentation to PDF for distribution or printing
+- Convert Slidev deck to PDF without rebuilding from source
+- Save Marp slides as PDF preserving themes and code highlighting
+- Archive impress.js presentations as a static PDF document
+- Generate PDF handouts from Quarto reveal.js slides
+- Batch convert HTML slide decks to PDF in CI/CD pipelines
+- Capture deployed presentations from any URL, no local source needed
 
 ## Supported Frameworks
 
@@ -130,6 +140,26 @@ Try increasing the wait time for slides that rely on lazy loading:
 
 ```bash
 html2pdf-slides presentation.html --wait 1000 -o output.pdf
+```
+
+### How is html2pdf-slides different from DeckTape?
+
+DeckTape is the long-standing tool for this task but requires manual `--plugins` flags per framework, lacks Quarto async support, and only captures partial Slidev v-click states. html2pdf-slides auto-detects the framework, handles all 8 Slidev v-click hidden states, supports Quarto's async Reveal initialization, and ships a multi-key keyboard fallback for unknown frameworks.
+
+### Can I use html2pdf-slides as a library in my Node.js project?
+
+Yes. Install as a dependency and import `convertToPDF` from the package. See the Programmatic API section above for an example. Useful for generating PDF handouts inside CI/CD pipelines or build scripts.
+
+### Does html2pdf-slides work with Marp slides?
+
+Yes. It detects Marp's bespoke.js runtime and navigates via hash-based URL changes. Both `marp-cli` HTML output and Marp for VS Code exports are supported.
+
+### How do I export a Quarto reveal.js presentation to PDF?
+
+Pass the deployed Quarto site URL directly. html2pdf-slides waits for Quarto's async Reveal.js initialization (which DeckTape often misses), then captures every slide.
+
+```bash
+html2pdf-slides https://your-quarto-site.com/slides.html -o quarto.pdf
 ```
 
 ## Requirements

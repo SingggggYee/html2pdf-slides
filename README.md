@@ -4,7 +4,11 @@ Convert HTML slide presentations to high-fidelity PDF files. The fastest way to 
 
 ![demo](demo.gif)
 
-A modern, framework-aware HTML to PDF converter for slide decks. Works with **reveal.js**, **Slidev**, **Marp**, **impress.js**, **Quarto**, **Shower**, **custom HTML slides**, and any HTML presentation that uses arrow-key navigation. Built on Puppeteer for pixel-perfect screenshot capture.
+## TL;DR
+
+**html2pdf-slides** is an open source command-line tool and Node.js library that converts HTML slide presentations to PDF. It auto-detects reveal.js, Slidev, Marp, impress.js, Quarto, and Shower decks, walks through every slide and animation state via framework-native APIs, and assembles the screenshots into a pixel-perfect PDF with correct dimensions and per-slide background colors. Built on Puppeteer, zero configuration, MIT licensed.
+
+A modern, framework-aware HTML to PDF converter for slide decks. Works with **reveal.js**, **Slidev**, **Marp**, **impress.js**, **Quarto**, **Shower**, **custom HTML slides**, and any HTML presentation that uses arrow-key navigation.
 
 ## Quick Start
 

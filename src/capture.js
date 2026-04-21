@@ -11,97 +11,72 @@ export async function discoverSlides(page, selector) {
 }
 
 export async function captureSlide(page, slideIndex, options) {
-  const { selector, activeClass, bgColor, scale, quality, waitMs } = options;
+  const { selector, activeClass, bgColor, quality, waitMs } = options;
 
-  const result = await page.evaluate(
-    async (idx, sel, activeCls, bg, sc, qual, wait) => {
+  const baseViewport = page.viewport();
+  const baseWidth = baseViewport.width;
+  const baseHeight = baseViewport.height;
+  const dpr = baseViewport.deviceScaleFactor || 1;
+
+  // 1) Isolate slide with !important to resist re-enabling JS,
+  //    neutralize scroll-snap, and measure natural content height.
+  const contentHeight = await page.evaluate(
+    (idx, sel, activeCls, bg) => {
+      document.documentElement.style.setProperty('scroll-snap-type', 'none', 'important');
+      document.body.style.background = bg;
+
       const slides = document.querySelectorAll(sel);
-
-      // Hide all slides
-      slides.forEach((s) => {
-        s.classList.remove(activeCls);
-        s.style.display = 'none';
+      slides.forEach((s, i) => {
+        if (i === idx) {
+          s.classList.add(activeCls);
+          s.style.setProperty('display', '', 'important');
+        } else {
+          s.classList.remove(activeCls);
+          s.style.setProperty('display', 'none', 'important');
+        }
       });
+
+      // Hide common progress indicators / nav chrome if present
+      document.querySelectorAll('nav.dots, .slide-dots, .progress-dots, [data-progress-dots], #dots, .reveal .controls, .reveal .progress').forEach((el) => el.style.setProperty('display', 'none', 'important'));
 
       const target = slides[idx];
-      target.classList.add(activeCls);
-      target.style.display = '';
-
-      // Remember original height before any changes
-      const originalHeight = target.clientHeight;
-      const originalScrollHeight = target.scrollHeight;
-      const hasOverflow = originalScrollHeight > originalHeight + 50;
-
-      // Only expand if content overflows — otherwise keep viewport size
-      target.style.overflow = 'visible';
-      target.style.maxHeight = 'none';
-      target.style.position = 'relative';
-      if (hasOverflow) {
-        target.style.height = 'auto';
-      }
-
-      // Also expand parent if needed
-      if (target.parentElement) {
-        target.parentElement.style.overflow = 'visible';
-        if (hasOverflow) {
-          target.parentElement.style.height = 'auto';
-        }
-      }
-
-      // Wait for reflow
-      await new Promise((r) => setTimeout(r, wait));
-
-      // Use the larger of original height and scroll height
-      const fullHeight = Math.max(target.scrollHeight, originalHeight);
-
-      // Capture with html2canvas
-      const canvas = await html2canvas(target, {
-        backgroundColor: bg,
-        scale: sc,
-        useCORS: true,
-        height: fullHeight,
-        windowHeight: fullHeight,
-        logging: false,
-      });
-
-      const dataUrl = canvas.toDataURL('image/jpeg', qual / 100);
-
-      // Sample background color from bottom-left corner of the captured image
-      const ctx = canvas.getContext('2d');
-      const pixel = ctx.getImageData(5, canvas.height - 5, 1, 1).data;
-      const slideBg = '#' + [pixel[0], pixel[1], pixel[2]].map(c => c.toString(16).padStart(2, '0')).join('');
-
-      // Restore
-      target.style.cssText = '';
-      if (target.parentElement) {
-        target.parentElement.style.cssText = '';
-      }
-
-      return {
-        dataUrl,
-        width: canvas.width,
-        height: canvas.height,
-        index: idx,
-        slideBg,
-      };
+      const origMin = target.style.minHeight;
+      target.style.minHeight = '0';
+      const h = target.scrollHeight;
+      target.style.minHeight = origMin;
+      return h;
     },
     slideIndex,
     selector,
     activeClass,
     bgColor,
-    scale,
-    quality,
-    waitMs,
   );
 
-  return result;
+  const shotHeight = Math.max(baseHeight, contentHeight);
+
+  // 2) Grow viewport so the whole slide lays out at natural size.
+  await page.setViewport({ width: baseWidth, height: shotHeight, deviceScaleFactor: dpr });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await new Promise((r) => setTimeout(r, waitMs));
+
+  // 3) Full-viewport screenshot — body only contains the target slide now.
+  const raw = await page.screenshot({ type: 'jpeg', quality: quality || 92, fullPage: false });
+  const buffer = Buffer.from(raw);
+
+  // 4) Restore viewport.
+  await page.setViewport({ width: baseWidth, height: baseHeight, deviceScaleFactor: dpr });
+
+  return {
+    dataUrl: `data:image/jpeg;base64,${buffer.toString('base64')}`,
+    width: baseWidth * dpr,
+    height: shotHeight * dpr,
+    index: slideIndex,
+    slideBg: null,
+  };
 }
 
 export function isBlankImage(dataUrl) {
-  // Quick heuristic: very small base64 payload likely means blank
   const base64 = dataUrl.split(',')[1];
   if (!base64) return true;
-  // A truly blank JPEG at 1920x1080 compresses to ~2-5KB
-  // Real content is usually >20KB
   return base64.length < 5000;
 }

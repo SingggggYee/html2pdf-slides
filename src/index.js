@@ -23,6 +23,7 @@ export async function convertToPDF(options) {
     waitMs = 300,
     retry = 2,
     headless = true,
+    viewport = { width: 1920, height: 1080 },
     onProgress,
   } = options;
 
@@ -30,34 +31,35 @@ export async function convertToPDF(options) {
 
   try {
     // Auto-detect framework
-    const detectPage = await openPage(browser, input);
+    const detectPage = await openPage(browser, input, viewport);
     const detection = await detectFramework(detectPage);
     await detectPage.close();
 
     let images;
     let slideCount;
+    let resolvedBg = bgColor;
 
     if (detection.framework === 'revealjs') {
       // reveal.js: use Reveal API navigation + page.screenshot()
-      const page = await openPage(browser, input);
+      const page = await openPage(browser, input, viewport);
       images = await captureRevealSlides(page, { quality, onProgress });
       slideCount = images.length;
       await page.close();
     } else if (detection.framework === 'slidev') {
       // Slidev: navigate via URL /1, /2, ...
-      const page = await openPage(browser, input);
+      const page = await openPage(browser, input, viewport);
       images = await captureSlidevSlides(page, input, { quality, onProgress });
       slideCount = images.length;
       await page.close();
     } else if (detection.framework === 'impressjs') {
       // impress.js: use impress().goto() API navigation
-      const page = await openPage(browser, input);
+      const page = await openPage(browser, input, viewport);
       images = await captureImpressSlides(page, { quality, onProgress });
       slideCount = images.length;
       await page.close();
     } else if (detection.framework === 'marp') {
       // Marp: navigate via hash-based routing
-      const page = await openPage(browser, input);
+      const page = await openPage(browser, input, viewport);
       images = await captureMarpSlides(page, { quality, onProgress });
       slideCount = images.length;
       await page.close();
@@ -77,12 +79,13 @@ export async function convertToPDF(options) {
 
           let bg = bgColor;
           if (!bgColor || bgColor === 'auto') {
-            const bgPage = await openPage(browser, input);
+            const bgPage = await openPage(browser, input, viewport);
             bg = await bgPage.evaluate(() => {
               return getComputedStyle(document.body).backgroundColor || '#ffffff';
             });
             await bgPage.close();
           }
+          resolvedBg = bg;
 
           images = await captureAll(browser, input, slides.length, {
             selector,
@@ -93,6 +96,7 @@ export async function convertToPDF(options) {
             waitMs,
             parallel,
             retry,
+            viewport,
             onProgress,
           });
         }
@@ -101,7 +105,7 @@ export async function convertToPDF(options) {
       if (!usedGeneric) {
         // Fallback: keyboard navigation + screenshot
         detection.framework = 'keyboard';
-        const page = await openPage(browser, input);
+        const page = await openPage(browser, input, viewport);
         images = await captureKeyboardSlides(page, { quality, onProgress });
         slideCount = images.length;
         await page.close();
@@ -116,7 +120,7 @@ export async function convertToPDF(options) {
     }
 
     // Build PDF
-    const pdfSize = await buildPDF(images, output, pageWidth);
+    const pdfSize = await buildPDF(images, output, pageWidth, resolvedBg, viewport);
 
     return {
       slideCount,

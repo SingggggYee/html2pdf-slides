@@ -13,12 +13,11 @@ export async function launchBrowser(headless = true) {
   });
 }
 
-export async function openPage(browser, htmlPath) {
+export async function openPage(browser, htmlPath, viewport = { width: 1920, height: 1080 }) {
   const page = await browser.newPage();
-  await page.setViewport({ width: 1920, height: 1080 });
+  await page.setViewport({ deviceScaleFactor: 2, ...viewport });
   const url = htmlPath.startsWith('http') ? htmlPath : `file://${path.resolve(htmlPath)}`;
   await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
-  await injectHtml2Canvas(page);
   return page;
 }
 

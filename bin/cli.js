@@ -20,6 +20,11 @@ program
   .option('--scale <number>', 'Capture resolution multiplier', (v) => parseFloat(v), 1.5)
   .option('--quality <number>', 'JPEG quality 1-100', (v) => parseInt(v, 10), 88)
   .option('--page-width <points>', 'PDF page width in points', (v) => parseInt(v, 10), 842)
+  .option('--viewport <WxH>', 'Browser viewport size used for capture (default 1920x1080)', (v) => {
+    const m = v.match(/^(\d+)x(\d+)$/);
+    if (!m) throw new Error('--viewport must be in WIDTHxHEIGHT format, e.g. 1512x811');
+    return { width: parseInt(m[1], 10), height: parseInt(m[2], 10) };
+  })
   .option('--parallel <number>', 'Number of parallel browser tabs', (v) => parseInt(v, 10), 2)
   .option('--wait <ms>', 'Wait time before each capture in ms', (v) => parseInt(v, 10), 300)
   .option('--retry <number>', 'Retry count for blank captures', (v) => parseInt(v, 10), 2)
@@ -45,6 +50,7 @@ program
         scale: opts.scale,
         quality: opts.quality,
         pageWidth: opts.pageWidth,
+        viewport: opts.viewport,
         parallel: opts.parallel,
         waitMs: opts.wait,
         retry: opts.retry,

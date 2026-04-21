@@ -2,7 +2,7 @@ import { openPage } from './browser.js';
 import { captureSlide, isBlankImage } from './capture.js';
 
 export async function captureAll(browser, htmlPath, slideCount, options) {
-  const { parallel, retry, onProgress } = options;
+  const { parallel, retry, viewport, onProgress } = options;
   const tabs = Math.min(parallel, slideCount);
 
   // Split slides into batches for each tab
@@ -21,7 +21,7 @@ export async function captureAll(browser, htmlPath, slideCount, options) {
     batches.map(async (batch) => {
       if (batch.length === 0) return;
 
-      const page = await openPage(browser, htmlPath);
+      const page = await openPage(browser, htmlPath, viewport);
 
       for (const slideIdx of batch) {
         let result = null;

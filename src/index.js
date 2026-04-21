@@ -8,6 +8,7 @@ import { captureSlidevSlides } from './capture-slidev.js';
 import { captureImpressSlides } from './capture-impressjs.js';
 import { captureMarpSlides } from './capture-marp.js';
 import { buildPDF } from './assembler.js';
+import { convertToVectorPDF } from './vector.js';
 
 export async function convertToPDF(options) {
   const {
@@ -24,10 +25,40 @@ export async function convertToPDF(options) {
     retry = 2,
     headless = true,
     viewport = { width: 1920, height: 1080 },
+    mode = 'raster',
     onProgress,
   } = options;
 
   const browser = await launchBrowser(headless);
+
+  if (mode === 'vector') {
+    try {
+      let resolvedBg = bgColor;
+      if (!bgColor || bgColor === 'auto') {
+        const bgPage = await openPage(browser, input, viewport);
+        resolvedBg = await bgPage.evaluate(() => getComputedStyle(document.body).backgroundColor || '#ffffff');
+        await bgPage.close();
+      }
+      const result = await convertToVectorPDF(browser, {
+        input,
+        output,
+        selector: userSelector || '.slide',
+        waitMs,
+        viewport,
+        bgColor: resolvedBg,
+        onProgress,
+      });
+      return {
+        slideCount: result.slideCount,
+        blankCount: 0,
+        pdfSize: result.pdfSize,
+        outputPath: output,
+        framework: 'vector',
+      };
+    } finally {
+      await browser.close();
+    }
+  }
 
   try {
     // Auto-detect framework

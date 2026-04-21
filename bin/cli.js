@@ -29,6 +29,7 @@ program
   .option('--wait <ms>', 'Wait time before each capture in ms', (v) => parseInt(v, 10), 300)
   .option('--retry <number>', 'Retry count for blank captures', (v) => parseInt(v, 10), 2)
   .option('--no-headless', 'Show browser window (for debugging)')
+  .option('--mode <raster|vector>', 'raster: @2x screenshots (default). vector: lossless page.pdf() — sharp text/SVG at any zoom', 'raster')
   .action(async (input, opts) => {
     const isUrl = input.startsWith('http://') || input.startsWith('https://');
     const inputPath = isUrl ? input : path.resolve(input);
@@ -51,6 +52,7 @@ program
         quality: opts.quality,
         pageWidth: opts.pageWidth,
         viewport: opts.viewport,
+        mode: opts.mode,
         parallel: opts.parallel,
         waitMs: opts.wait,
         retry: opts.retry,

@@ -37,7 +37,7 @@ export async function captureSlide(page, slideIndex, options) {
       });
 
       // Hide common progress indicators / nav chrome if present
-      document.querySelectorAll('nav.dots, .slide-dots, .progress-dots, [data-progress-dots], #dots, .reveal .controls, .reveal .progress').forEach((el) => el.style.setProperty('display', 'none', 'important'));
+      document.querySelectorAll('nav.dots, .slide-dots, .progress-dots, [data-progress-dots], #dots, .footer-hint, .keyboard-hint, .scroll-hint, [data-nav-hint], .reveal .controls, .reveal .progress').forEach((el) => el.style.setProperty('display', 'none', 'important'));
 
       const target = slides[idx];
       const origMin = target.style.minHeight;

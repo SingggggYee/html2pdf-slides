@@ -140,7 +140,7 @@ export async function detectFramework(page) {
       );
       result = await page.evaluate(detectSync);
     } catch {
-      // Timeout is fine — no async framework detected, keep original result
+      // Timeout is fine, no async framework detected, keep original result
     }
   }
 

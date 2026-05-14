@@ -59,7 +59,7 @@ export async function captureSlide(page, slideIndex, options) {
   await page.evaluate(() => window.scrollTo(0, 0));
   await new Promise((r) => setTimeout(r, waitMs));
 
-  // 3) Full-viewport screenshot — body only contains the target slide now.
+  // 3) Full-viewport screenshot. Body only contains the target slide now.
   const raw = await page.screenshot({ type: 'jpeg', quality: quality || 92, fullPage: false });
   const buffer = Buffer.from(raw);
 

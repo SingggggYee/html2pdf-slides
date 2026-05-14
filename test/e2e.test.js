@@ -78,7 +78,7 @@ test('--scale changes capture resolution (deviceScaleFactor honored)', { timeout
     const size2 = (await stat(out2)).size;
     assert.ok(
       size2 > size1 * 1.5,
-      `scale=2 PDF (${size2}B) should be substantially larger than scale=1 (${size1}B) — proves --scale affects capture`,
+      `scale=2 PDF (${size2}B) should be substantially larger than scale=1 (${size1}B), proving --scale affects capture`,
     );
   });
 });

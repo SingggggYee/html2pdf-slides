@@ -89,7 +89,7 @@ export async function convertToVectorPDF(browser, options) {
       });
 
       const sub = await PDFDocument.load(pdfBytes);
-      // Copy only the first page — if Chromium still paginated, the remainder is discarded.
+      // Copy only the first page. If Chromium still paginated, the remainder is discarded.
       const [copied] = await merged.copyPages(sub, [0]);
       merged.addPage(copied);
 

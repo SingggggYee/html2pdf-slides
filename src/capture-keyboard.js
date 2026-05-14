@@ -32,7 +32,7 @@ export async function captureKeyboardSlides(page, options) {
     ).forEach((el) => (el.style.display = 'none'));
   });
 
-  // Initial detection delay — wait for frameworks to finish initializing
+  // Initial detection delay, wait for frameworks to finish initializing
   await new Promise((r) => setTimeout(r, 1500));
 
   // Click center of page to ensure presentation has focus
@@ -114,7 +114,7 @@ export async function captureKeyboardSlides(page, options) {
     if (seenHashes.has(hash)) {
       consecutiveDups++;
       if (consecutiveDups >= MAX_CONSECUTIVE_DUPS) {
-        // We've looped back or stuck — stop
+        // We've looped back or stuck, stop
         break;
       }
       // Skip this duplicate but keep trying

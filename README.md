@@ -108,7 +108,7 @@ When to pick which:
 
 Vector mode uses Chromium's native `page.pdf()` per slide and merges with `pdf-lib`, so text-as-text and SVG-as-vector are preserved.
 
-**Framework support in vector mode (as of 1.1.0):** generic `.slide`-class decks (with or without an active class). Framework-specific decks (reveal.js, Slidev, Marp, impress.js) are auto-detected and rejected with a clear error — they need framework-aware navigation, which lands in 1.2.0. For those, use raster mode (the default).
+**Framework support in vector mode (as of 1.1.0):** generic `.slide`-class decks (with or without an active class). Framework-specific decks (reveal.js, Slidev, Marp, impress.js) are auto-detected and rejected with a clear error, because they need framework-aware navigation, which lands in 1.2.0. For those, use raster mode (the default).
 
 **Note on `--page-width` in vector mode:** `--page-width` controls PDF page width (in points) in raster mode. Vector mode ignores it and emits pages at the source viewport dimensions to preserve the deck's natural aspect ratio without scaling. If you need a specific PDF page width, use raster mode.
 

@@ -38,7 +38,7 @@ program
   .addOption(
     new Option(
       '--mode <type>',
-      'raster: @2x screenshots (default). vector: lossless page.pdf() — sharp text/SVG at any zoom',
+      'raster: @2x screenshots (default). vector: lossless page.pdf() for sharp text/SVG at any zoom',
     )
       .choices(['raster', 'vector'])
       .default('raster'),

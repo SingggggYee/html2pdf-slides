@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Test deck</title>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #0a0a0a; color: #fff; font-family: -apple-system, sans-serif; }
+  .slide { width: 100vw; height: 100vh; display: none; align-items: center; justify-content: center; font-size: 6rem; }
+  .slide.active { display: flex; }
+  .slide:nth-child(1) { background: #1a1a2e; }
+  .slide:nth-child(2) { background: #2e1a1a; }
+  .slide:nth-child(3) { background: #1a2e1a; }
+</style>
+</head>
+<body>
+<div class="slide active">One</div>
+<div class="slide">Two</div>
+<div class="slide">Three</div>
+</body>
+</html>

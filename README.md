@@ -84,6 +84,34 @@ Most HTML to PDF tools treat your presentation like a static webpage. They miss 
 3. **Capture** pixel-perfect screenshots at original viewport size
 4. **Assemble** into PDF with per-slide background colors and 16:9 minimum page dimensions
 
+## Vector mode (lossless, selectable text)
+
+By default html2pdf-slides captures slides as high-resolution screenshots (raster mode), which preserves every pixel including custom fonts, gradients, and canvas-rendered content. For decks that are mostly text and SVG, `--mode vector` produces a smaller PDF where **text stays selectable and searchable** and graphics stay crisp at any zoom level.
+
+```bash
+# Raster mode (default): pixel-perfect, larger file, text is not selectable
+html2pdf-slides slides.html -o slides.pdf
+
+# Vector mode: smaller file, selectable text, scalable SVG
+html2pdf-slides slides.html --mode vector -o slides.pdf
+```
+
+When to pick which:
+
+| Use case | Mode |
+|---|---|
+| Code-heavy decks, want copy-pasteable code blocks | `vector` |
+| Text-heavy presentations, want full-text search in the PDF | `vector` |
+| Canvas / WebGL / complex CSS animations | `raster` (default) |
+| Custom fonts that may not embed cleanly | `raster` (default) |
+| Smallest possible file size | `vector` |
+
+Vector mode uses Chromium's native `page.pdf()` per slide and merges with `pdf-lib`, so text-as-text and SVG-as-vector are preserved.
+
+**Framework support in vector mode (as of 1.1.0):** generic `.slide`-class decks (with or without an active class). Framework-specific decks (reveal.js, Slidev, Marp, impress.js) are auto-detected and rejected with a clear error — they need framework-aware navigation, which lands in 1.2.0. For those, use raster mode (the default).
+
+**Note on `--page-width` in vector mode:** `--page-width` controls PDF page width (in points) in raster mode. Vector mode ignores it and emits pages at the source viewport dimensions to preserve the deck's natural aspect ratio without scaling. If you need a specific PDF page width, use raster mode.
+
 ## Options
 
 | Flag | Description | Default |
@@ -91,8 +119,9 @@ Most HTML to PDF tools treat your presentation like a static webpage. They miss 
 | `-o, --output <path>` | Output PDF path | same as input |
 | `-s, --selector <css>` | CSS selector for slides | `.slide` |
 | `-b, --bg-color <hex>` | Background color | `#0a0a0a` |
-| `--scale <n>` | Resolution multiplier | `1.5` |
-| `--quality <n>` | JPEG quality (1-100) | `88` |
+| `--mode <raster\|vector>` | Capture mode (see Vector mode section above) | `raster` |
+| `--scale <n>` | Resolution multiplier (raster mode) | `1.5` |
+| `--quality <n>` | JPEG quality 1-100 (raster mode) | `88` |
 | `--page-width <pts>` | PDF page width | `842` |
 | `--parallel <n>` | Parallel browser tabs | `2` |
 | `--wait <ms>` | Wait before capture | `300` |
@@ -108,6 +137,7 @@ const result = await convertToPDF({
   input: 'https://revealjs.com/demo/',
   output: 'slides.pdf',
   quality: 90,
+  mode: 'raster', // or 'vector' for selectable-text output
   onProgress: (current, total) => {
     console.log(`Capturing slide ${current}/${total}`);
   },

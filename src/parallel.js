@@ -1,4 +1,4 @@
-import { openPage } from './browser.js';
+import { withPage } from './browser.js';
 import { captureSlide, isBlankImage } from './capture.js';
 
 export async function captureAll(browser, htmlPath, slideCount, options) {
@@ -21,41 +21,32 @@ export async function captureAll(browser, htmlPath, slideCount, options) {
     batches.map(async (batch) => {
       if (batch.length === 0) return;
 
-      const page = await openPage(browser, htmlPath, viewport);
+      await withPage(browser, htmlPath, viewport, async (page) => {
+        for (const slideIdx of batch) {
+          let result = null;
 
-      for (const slideIdx of batch) {
-        let result = null;
-
-        for (let attempt = 0; attempt <= retry; attempt++) {
-          result = await captureSlide(page, slideIdx, options);
-
-          if (!isBlankImage(result.dataUrl)) break;
-
-          if (attempt < retry) {
-            // Retry with longer wait
-            const retryOptions = { ...options, waitMs: options.waitMs + 300 * (attempt + 1) };
-            result = await captureSlide(page, slideIdx, retryOptions);
+          for (let attempt = 0; attempt <= retry; attempt++) {
+            const attemptWait = options.waitMs + 300 * attempt;
+            result = await captureSlide(page, slideIdx, { ...options, waitMs: attemptWait });
+            if (!isBlankImage(result.dataUrl)) break;
           }
+
+          const base64 = result.dataUrl.split(',')[1];
+          const buffer = Buffer.from(base64, 'base64');
+
+          allResults[slideIdx] = {
+            buffer,
+            width: result.width,
+            height: result.height,
+            index: slideIdx,
+            blank: isBlankImage(result.dataUrl),
+            slideBg: result.slideBg,
+          };
+
+          completed++;
+          if (onProgress) onProgress(completed, slideCount, slideIdx);
         }
-
-        // Convert dataUrl to buffer
-        const base64 = result.dataUrl.split(',')[1];
-        const buffer = Buffer.from(base64, 'base64');
-
-        allResults[slideIdx] = {
-          buffer,
-          width: result.width,
-          height: result.height,
-          index: slideIdx,
-          blank: isBlankImage(result.dataUrl),
-          slideBg: result.slideBg,
-        };
-
-        completed++;
-        if (onProgress) onProgress(completed, slideCount, slideIdx);
-      }
-
-      await page.close();
+      });
     }),
   );
 

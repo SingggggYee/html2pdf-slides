@@ -26,7 +26,7 @@ export async function buildPDF(slideImages, outputPath, pageWidth = 842, fallbac
     ? pageWidth * (viewport.height / viewport.width)
     : pageWidth * (9 / 16);
 
-  for (const { buffer, width, height } of slideImages) {
+  for (const { buffer, width, height, slideBg } of slideImages) {
     const image = await pdfDoc.embedJpg(buffer);
     const scale = pageWidth / width;
     const imageHeight = height * scale;
@@ -39,7 +39,7 @@ export async function buildPDF(slideImages, outputPath, pageWidth = 842, fallbac
       y: 0,
       width: pageWidth,
       height: pageHeight,
-      color: fallbackBg,
+      color: slideBg ? parseColor(slideBg) : fallbackBg,
     });
 
     page.drawImage(image, {

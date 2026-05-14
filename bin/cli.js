@@ -1,20 +1,26 @@
 #!/usr/bin/env node
 
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 import ora from 'ora';
 import chalk from 'chalk';
 import path from 'node:path';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { convertToPDF } from '../src/index.js';
+
+const pkg = JSON.parse(
+  readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+);
 
 const program = new Command();
 
 program
   .name('html2pdf-slides')
   .description('Convert HTML slide decks to high-fidelity PDF files')
-  .version('1.0.0')
+  .version(pkg.version)
   .argument('<input>', 'Path to HTML slide deck')
   .option('-o, --output <path>', 'Output PDF path')
-  .option('-s, --selector <css>', 'CSS selector for slide elements', '.slide')
+  .option('-s, --selector <css>', 'CSS selector for slide elements (default: framework-detected, falls back to .slide)')
   .option('-a, --active-class <name>', 'CSS class that makes a slide visible', 'active')
   .option('-b, --bg-color <hex>', 'Background color for capture', '#0a0a0a')
   .option('--scale <number>', 'Capture resolution multiplier', (v) => parseFloat(v), 1.5)
@@ -29,7 +35,14 @@ program
   .option('--wait <ms>', 'Wait time before each capture in ms', (v) => parseInt(v, 10), 300)
   .option('--retry <number>', 'Retry count for blank captures', (v) => parseInt(v, 10), 2)
   .option('--no-headless', 'Show browser window (for debugging)')
-  .option('--mode <raster|vector>', 'raster: @2x screenshots (default). vector: lossless page.pdf() — sharp text/SVG at any zoom', 'raster')
+  .addOption(
+    new Option(
+      '--mode <type>',
+      'raster: @2x screenshots (default). vector: lossless page.pdf() — sharp text/SVG at any zoom',
+    )
+      .choices(['raster', 'vector'])
+      .default('raster'),
+  )
   .action(async (input, opts) => {
     const isUrl = input.startsWith('http://') || input.startsWith('https://');
     const inputPath = isUrl ? input : path.resolve(input);

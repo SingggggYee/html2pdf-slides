@@ -1,8 +1,10 @@
 /**
  * Capture strategy for reveal.js presentations.
- * Uses Reveal.next() to walk through every step (including fragments).
- * Deduplicates by comparing slide indices to avoid capturing the same visual twice
- * when fragments don't change enough.
+ * Uses Reveal.next() to walk through every step (slide change or fragment reveal).
+ * Stops when getIndices() stops changing, which marks the end of the deck.
+ * Each step produces one PDF page — Reveal's own "no-op" steps are filtered out
+ * by the index-change check, but visually similar fragments are intentionally kept
+ * as separate pages per the README's "one page per state" promise.
  */
 
 export async function captureRevealSlides(page, options) {

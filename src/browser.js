@@ -21,6 +21,19 @@ export async function openPage(browser, htmlPath, viewport = { width: 1920, heig
   return page;
 }
 
+export async function withPage(browser, htmlPath, viewport, fn) {
+  const page = await openPage(browser, htmlPath, viewport);
+  try {
+    return await fn(page);
+  } finally {
+    try {
+      await page.close();
+    } catch {
+      // page may already be closed; swallow so the original error surfaces
+    }
+  }
+}
+
 async function injectHtml2Canvas(page) {
   const script = await readFile(HTML2CANVAS_PATH, 'utf-8');
   await page.evaluate(script);

@@ -1,4 +1,4 @@
-import { launchBrowser, openPage } from './browser.js';
+import { launchBrowser, withPage } from './browser.js';
 import { detectFramework } from './detect.js';
 import { discoverSlides } from './capture.js';
 import { captureAll } from './parallel.js';
@@ -24,25 +24,43 @@ export async function convertToPDF(options) {
     waitMs = 300,
     retry = 2,
     headless = true,
-    viewport = { width: 1920, height: 1080 },
+    viewport: rawViewport = { width: 1920, height: 1080 },
     mode = 'raster',
     onProgress,
   } = options;
+
+  const viewport = { ...rawViewport, deviceScaleFactor: scale };
+
+  if (mode !== 'raster' && mode !== 'vector') {
+    throw new Error(`Invalid mode: "${mode}". Expected "raster" or "vector".`);
+  }
 
   const browser = await launchBrowser(headless);
 
   if (mode === 'vector') {
     try {
+      if (!userSelector) {
+        const detection = await withPage(browser, input, viewport, (page) => detectFramework(page));
+
+        const VECTOR_UNSUPPORTED = new Set(['revealjs', 'slidev', 'marp', 'impressjs']);
+        if (VECTOR_UNSUPPORTED.has(detection.framework)) {
+          throw new Error(
+            `Vector mode does not yet support ${detection.framework} decks (use --mode raster, or pass --selector to override). Framework-aware vector capture is planned for 1.2.0.`,
+          );
+        }
+      }
+
       let resolvedBg = bgColor;
       if (!bgColor || bgColor === 'auto') {
-        const bgPage = await openPage(browser, input, viewport);
-        resolvedBg = await bgPage.evaluate(() => getComputedStyle(document.body).backgroundColor || '#ffffff');
-        await bgPage.close();
+        resolvedBg = await withPage(browser, input, viewport, (page) =>
+          page.evaluate(() => getComputedStyle(document.body).backgroundColor || '#ffffff'),
+        );
       }
       const result = await convertToVectorPDF(browser, {
         input,
         output,
         selector: userSelector || '.slide',
+        activeClass,
         waitMs,
         viewport,
         bgColor: resolvedBg,
@@ -61,48 +79,40 @@ export async function convertToPDF(options) {
   }
 
   try {
-    // Auto-detect framework
-    const detectPage = await openPage(browser, input, viewport);
-    const detection = await detectFramework(detectPage);
-    await detectPage.close();
+    const detection = await withPage(browser, input, viewport, (page) => detectFramework(page));
 
     let images;
     let slideCount;
     let resolvedBg = bgColor;
 
     if (detection.framework === 'revealjs') {
-      // reveal.js: use Reveal API navigation + page.screenshot()
-      const page = await openPage(browser, input, viewport);
-      images = await captureRevealSlides(page, { quality, onProgress });
+      images = await withPage(browser, input, viewport, (page) =>
+        captureRevealSlides(page, { quality, onProgress }),
+      );
       slideCount = images.length;
-      await page.close();
     } else if (detection.framework === 'slidev') {
-      // Slidev: navigate via URL /1, /2, ...
-      const page = await openPage(browser, input, viewport);
-      images = await captureSlidevSlides(page, input, { quality, onProgress });
+      images = await withPage(browser, input, viewport, (page) =>
+        captureSlidevSlides(page, input, { quality, onProgress }),
+      );
       slideCount = images.length;
-      await page.close();
     } else if (detection.framework === 'impressjs') {
-      // impress.js: use impress().goto() API navigation
-      const page = await openPage(browser, input, viewport);
-      images = await captureImpressSlides(page, { quality, onProgress });
+      images = await withPage(browser, input, viewport, (page) =>
+        captureImpressSlides(page, { quality, onProgress }),
+      );
       slideCount = images.length;
-      await page.close();
     } else if (detection.framework === 'marp') {
-      // Marp: navigate via hash-based routing
-      const page = await openPage(browser, input, viewport);
-      images = await captureMarpSlides(page, { quality, onProgress });
+      images = await withPage(browser, input, viewport, (page) =>
+        captureMarpSlides(page, { quality, onProgress }),
+      );
       slideCount = images.length;
-      await page.close();
     } else {
-      // Try generic html2canvas capture first, fallback to keyboard
       const selector = userSelector || (detection.framework === 'generic' ? '.slide' : null);
       let usedGeneric = false;
 
       if (selector) {
-        const discoveryPage = await openPage(browser, input);
-        const slides = await discoverSlides(discoveryPage, selector);
-        await discoveryPage.close();
+        const slides = await withPage(browser, input, viewport, (page) =>
+          discoverSlides(page, selector),
+        );
 
         if (slides.length > 0) {
           usedGeneric = true;
@@ -110,11 +120,9 @@ export async function convertToPDF(options) {
 
           let bg = bgColor;
           if (!bgColor || bgColor === 'auto') {
-            const bgPage = await openPage(browser, input, viewport);
-            bg = await bgPage.evaluate(() => {
-              return getComputedStyle(document.body).backgroundColor || '#ffffff';
-            });
-            await bgPage.close();
+            bg = await withPage(browser, input, viewport, (page) =>
+              page.evaluate(() => getComputedStyle(document.body).backgroundColor || '#ffffff'),
+            );
           }
           resolvedBg = bg;
 
@@ -134,12 +142,11 @@ export async function convertToPDF(options) {
       }
 
       if (!usedGeneric) {
-        // Fallback: keyboard navigation + screenshot
         detection.framework = 'keyboard';
-        const page = await openPage(browser, input, viewport);
-        images = await captureKeyboardSlides(page, { quality, onProgress });
+        images = await withPage(browser, input, viewport, (page) =>
+          captureKeyboardSlides(page, { quality, onProgress }),
+        );
         slideCount = images.length;
-        await page.close();
       }
     }
 

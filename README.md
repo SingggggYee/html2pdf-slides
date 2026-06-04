@@ -1,4 +1,4 @@
-# html2pdf-slides
+# html2pdf-slides: Export reveal.js, Slidev, Marp & impress.js slides to PDF
 
 Convert HTML slide presentations to high-fidelity PDF files. The fastest way to export reveal.js, Slidev, Marp, impress.js, and Quarto presentations as PDF, with animations, fragments, dark themes, and click-reveal content fully preserved.
 
